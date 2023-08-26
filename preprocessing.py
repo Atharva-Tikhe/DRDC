@@ -1,100 +1,64 @@
-
-import numpy as np # linear algebra
-import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-
 import cv2 as cv
-from matplotlib import pyplot as plt
+import numpy as np
 
-# Preprocessing
-# 1. Region of Interest (ROI) 
-    # 1. Histogram equalization
-    # 2. Median blur
-
-
-def he_and_mb(path, write: bool, *write_path):
-    '''Perform step one of preprocessing
-    RGB image is read and histogram equalization is done after RGB is converted to HSV (need brightness channel)
-    The HE image is then blurred using median blur (kernel - 5)
+def perform_he_mb(path, clahe: bool, write: bool, *write_path):
     '''
+        Performs first task of preprocessing pipeline
+        This function performs histogram equalization (increased contrast) and median blur (kernel = 5, get rid of noise)
+        returns: final image
+    '''
+    ori_img = cv.imread(path, cv.IMREAD_GRAYSCALE)
     
-    # Image has to be grayscale
-    # img = cv.imread('/kaggle/input/resized-2015-2019-diabetic-retinopathy-detection/resized_test19/003f0afdcd15.jpg', cv.IMREAD_GRAYSCALE)
-    # equ = cv.equalizeHist(img)
-    # cv.imwrite("/kaggle/working/test_he.jpg", equ)
+    if clahe == False:
+        # Perform classic histogram equalization
+        he = cv.equalizeHist(ori_img)
+    else:
+        # Perform Contrast Limited Adaptive Histogram Equalization
+        clahe = cv.createCLAHE(clipLimit=2.0, tileGridSize=(8,8))
+        he = clahe.apply(ori_img)
 
+    # Perform median blur or he image (other kernel sizes aren't checked)
+    med_blur_img = cv.medianBlur(he, 5)
 
-    # convert RGB to HSV to get brightness channel (V-channel)
-    img_hsv = cv.cvtColor(cv.imread(path), cv.COLOR_RGB2HSV)
-
-    # Histogram equalisation on the V-channel
-    img_hsv[:, :, 2] = cv.equalizeHist(img_hsv[:, :, 2])
-
-    # convert image back from HSV to RGB
-    img = cv.cvtColor(img_hsv, cv.COLOR_HSV2RGB)
-
-    med_blur_img = cv.medianBlur(img, 5)
-    
-    #```
-    #     # convert from RGB color-space to YCrCb
-    # ycrcb_img = cv.cvtColor(rgb_img, cv.COLOR_BGR2YCrCb)
-    # 
-    #     # equalize the histogram of the Y channel
-    # ycrcb_img[:, :, 0] = cv.equalizeHist(ycrcb_img[:, :, 0])
-    # 
-    #     # convert back to RGB color-space from YCrCb
-    # equalized_img = cv.cvtColor(ycrcb_img, cv.COLOR_YCrCb2BGR)
-    # 
-    # cv.imwrite('/kaggle/working/equalized_img.jpg', equalized_img)
-    # ```
-    # source: https://stackoverflow.com/questions/31998428/opencv-python-equalizehist-colored-image
-
-    # Added a median blur to take care of salt and pepper noise or any noise for that matter.
-    # Advantage: the centre pixel value is one that exists in the image.
     if write == True:
-        # cv.imwrite(f"{write_path[0]}/he.jpg", img)
+        cv.imwrite(f"{write_path[0]}/he.jpg", he)
         cv.imwrite(f"{write_path[0]}/med_blur.jpg", med_blur_img)
     return med_blur_img
+
+def perform_thresholding(img):
+    img_mat = np.asarray(img)
+
+    threshold = np.median(np.unique(img_mat))
+
+    thresh = cv.threshold(img, threshold, 255, cv.THRESH_BINARY)
+    cv.imwrite("./test_images/thresh_clahe.jpg", thresh[1])
+
+# perform_he_mb("./test_images/0ad36156ad5d.jpg" ,False, True, "./test_images")
+# perform_thresholding(perform_he_mb("./test_images/0ad36156ad5d.jpg", True ,False))
+
+class GrahamPreprocessing:
+    def __init__(self):
+        ...
+    
+    def scaleRadius(self, img, scale):
+        x = img[int(img.shape[0]/2), :, :].sum(1)
+        r = (x>x.mean()/10).sum()/2
+        s = scale * 1.0/ r
+        return cv.resize(img,(0,0),fx=s,fy=s)
+
     
 
-hemb_img = he_and_mb('test_images/0ad36156ad5d.jpg', True, "./test_images")
+def sub_local_mean_color():
+    test = GrahamPreprocessing()
+    scale = 300
+    scaled_img = test.scaleRadius(cv.imread("./test_images/0ad36156ad5d.jpg"), scale)
+    # subtract local mean color
+    scaled_img = cv.addWeighted(scaled_img, 4, cv.GaussianBlur(scaled_img, (0,0), scale/2), -4, 128)
 
+    rem_10 = np.zeros(scaled_img.shape)
+    cv.circle(rem_10, (int(scaled_img.shape[1]/2), int(scaled_img.shape[0]/2)), int(scale * 0.9), (1,1,1), -1, 8, 0)
 
+    scaled_img = scaled_img * rem_10 + 128 * (1-rem_10)
+    return scaled_img
 
-"""IMAGE SEGMENTATION 
-1. Image is converted to RGB
-2. Reshape to 2D
-3. K-means clustering
-"""
-
-# flatten the image while preserving 3 channels
-pixel_vals = hemb_img.reshape((-1,3))
-
-pixel_vals = np.float32(pixel_vals)
-
-#the below line of code defines the criteria for the algorithm to stop running,
-#which will happen is 100 iterations are run or the epsilon (which is the required accuracy)
-#becomes 85%
-criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 100, 0.85)
-
-# then perform k-means clustering with number of clusters defined as 3
-#also random centres are initially choosed for k-means clustering
-k = 3
-retval, labels, centres = cv.kmeans(pixel_vals, k, None, criteria, 10, cv.KMEANS_RANDOM_CENTERS)
-
-# convert data into 8-bit values
-centres = np.uint8(centres)
-segmented_data = centres[labels.flatten()]
-
-# reshape data into the original image dimensions
-segmented_image = segmented_data.reshape((hemb_img.shape))
-
-cv.imwrite("./test_images/clustered_img.jpg", segmented_image)
-
-lowest_centre = min(centres.flatten())
-
-input_for_thresh = cv.cvtColor(segmented_image, cv.COLOR_RGB2GRAY)
-
-thresh = cv.threshold(input_for_thresh, lowest_centre, 255, cv.THRESH_BINARY)
-
-cv.imwrite('./test_images/thresh.jpg', thresh[1])
-
+cv.imwrite('graham.jpg', sub_local_mean_color())
