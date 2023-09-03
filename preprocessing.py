@@ -62,3 +62,5 @@ def sub_local_mean_color():
     return scaled_img
 
 cv.imwrite('graham.jpg', sub_local_mean_color())
+
+
