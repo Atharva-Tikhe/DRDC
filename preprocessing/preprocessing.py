@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 
+
 def perform_he_mb(path, clahe: bool, write: bool, *write_path):
     '''
         Performs first task of preprocessing pipeline
@@ -33,25 +34,18 @@ def perform_thresholding(img):
     thresh = cv.threshold(img, threshold, 255, cv.THRESH_BINARY)
     cv.imwrite("./test_images/thresh_clahe.jpg", thresh[1])
 
-# perform_he_mb("./test_images/0ad36156ad5d.jpg" ,False, True, "./test_images")
-# perform_thresholding(perform_he_mb("./test_images/0ad36156ad5d.jpg", True ,False))
 
-class GrahamPreprocessing:
-    def __init__(self):
-        ...
-    
-    def scaleRadius(self, img, scale):
-        x = img[int(img.shape[0]/2), :, :].sum(1)
-        r = (x>x.mean()/10).sum()/2
-        s = scale * 1.0/ r
-        return cv.resize(img,(0,0),fx=s,fy=s)
+def scaleRadius(img, scale):
+    x = img[int(img.shape[0]/2), :, :].sum(1)
+    r = (x>x.mean()/10).sum()/2
+    s = scale * 1.0/ r
+    return cv.resize(img,(0,0),fx=s,fy=s)
 
     
-
-def sub_local_mean_color():
-    test = GrahamPreprocessing()
+def sub_local_mean_color(img_path):
+    img = cv.imread(img_path)
     scale = 300
-    scaled_img = test.scaleRadius(cv.imread("./test_images/0ad36156ad5d.jpg"), scale)
+    scaled_img = scaleRadius(img, scale)
     # subtract local mean color
     scaled_img = cv.addWeighted(scaled_img, 4, cv.GaussianBlur(scaled_img, (0,0), scale/2), -4, 128)
 
@@ -60,7 +54,5 @@ def sub_local_mean_color():
 
     scaled_img = scaled_img * rem_10 + 128 * (1-rem_10)
     return scaled_img
-
-cv.imwrite('graham.jpg', sub_local_mean_color())
 
 
