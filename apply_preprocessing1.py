@@ -7,9 +7,9 @@ test_images_path = os.path.join("..", "DRDC_data", "archive", "test_images")
 train_images_path = os.path.join("..", "DRDC_data", "archive", "train_images")
 val_images_path = os.path.join("..", "DRDC_data", "archive", "val_images")
 
-test_images = os.listdir(test_images_path)[:5] 
-train_images = os.listdir(train_images_path)[:5] 
-val_images = os.listdir(val_images_path)[:5] 
+test_images = os.listdir(test_images_path)
+train_images = os.listdir(train_images_path) 
+val_images = os.listdir(val_images_path) 
 
 pp_test_images_path = os.path.join("..", "DRDC_data", "preprocessed", "test_images")
 pp_train_images = os.path.join("..", "DRDC_data", "preprocessed", "train_images")
