@@ -9,9 +9,11 @@ from tensorflow.keras.layers import Flatten, Dense, Dropout
 
 # Define paths to the train, validation, and test data folders
 
-test_data_dir = os.path.join("..", "DRDC_data", "preprocessed", "test_images")
-train_data_dir = os.path.join("..", "DRDC_data", "preprocessed", "train_images")
-val_data_dir = os.path.join("..", "DRDC_data", "preprocessed", "val_images")
+preprocess_dir = os.path.join("..", "DRDC_data", "preprocessed")
+
+test_data_dir = os.path.join(preprocess_dir, "test_images")
+train_data_dir = os.path.join(preprocess_dir, "train_images")
+val_data_dir = os.path.join(preprocess_dir, "val_images")
 
 
 #train_data_dir = 'C:/Users/aditi/Downloads/Project/DRDC_data/preprocessed/train_images'
@@ -20,17 +22,15 @@ val_data_dir = os.path.join("..", "DRDC_data", "preprocessed", "val_images")
 
 
 # Load labels from the Excel sheets as described in previous responses.
-train_labels = pd.read_csv('train_1.csv')
-validation_labels = pd.read_csv('valid.csv')
+train_labels = pd.read_csv(os.path.join(preprocess_dir,'train_1.csv'))
+validation_labels = pd.read_csv(os.path.join(preprocess_dir,'valid.csv'))
 
 # Define a function to preprocess the labels
 def preprocess_labels(labels):
-    labels['Stage'] = labels['Stage'].apply(lambda x: 1 if x > 0 else 0)
+    labels['diagnosis'] = labels['diagnosis'].apply(lambda x: 1 if x > 0 else 0)
     return labels
 
 # Preprocess train and validation labels
-train_labels = pd.read_csv('train_1.csv')
-validation_labels = pd.read_csv('valid.csv')
 train_labels = preprocess_labels(train_labels)
 validation_labels = preprocess_labels(validation_labels)
 

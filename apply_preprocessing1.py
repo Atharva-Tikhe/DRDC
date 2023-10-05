@@ -25,10 +25,10 @@ if not os.path.exists(pp_val_images):
     os.mkdir(pp_val_images)
 
 
-for image in test_images:
-    print(f'processing {image}')
-    processed_img = preprocessing.sub_local_mean_color(os.path.join(test_images_path, image))
-    cv.imwrite(os.path.join("..", "DRDC_data", "preprocessed", "test_images", image), processed_img)
+# for image in test_images:
+#     print(f'processing {image}')
+#     processed_img = preprocessing.sub_local_mean_color(os.path.join(test_images_path, image))
+#     cv.imwrite(os.path.join("..", "DRDC_data", "preprocessed", "test_images", image), processed_img)
 
 
 for image in train_images:
@@ -36,10 +36,10 @@ for image in train_images:
     processed_img = preprocessing.sub_local_mean_color(os.path.join(train_images_path, image))
     cv.imwrite(os.path.join("..", "DRDC_data", "preprocessed", "train_images", image), processed_img)
 
-for image in val_images:
-    print(f"processing {image}")
-    processed_img = preprocessing.sub_local_mean_color(os.path.join(val_images_path, image))
-    cv.imwrite(os.path.join("..", "DRDC_data", "preprocessed", "val_images", image), processed_img)
+# for image in val_images:
+#     print(f"processing {image}")
+#     processed_img = preprocessing.sub_local_mean_color(os.path.join(val_images_path, image))
+#     cv.imwrite(os.path.join("..", "DRDC_data", "preprocessed", "val_images", image), processed_img)
 
 
 
