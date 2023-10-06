@@ -11,9 +11,9 @@ from tensorflow.keras.layers import Flatten, Dense, Dropout
 
 preprocess_dir = os.path.join("..", "DRDC_data", "preprocessed")
 
-test_data_dir = os.path.join(preprocess_dir, "test_images")
-train_data_dir = os.path.join(preprocess_dir, "train_images")
-val_data_dir = os.path.join(preprocess_dir, "val_images")
+test_data_dir = os.path.join(preprocess_dir, "test")
+train_data_dir = os.path.join(preprocess_dir, "train")
+val_data_dir = os.path.join(preprocess_dir, "validation")
 
 
 #train_data_dir = 'C:/Users/aditi/Downloads/Project/DRDC_data/preprocessed/train_images'
@@ -26,6 +26,7 @@ train_labels = pd.read_csv(os.path.join(preprocess_dir,'train_1.csv'))
 validation_labels = pd.read_csv(os.path.join(preprocess_dir,'valid.csv'))
 
 # Define a function to preprocess the labels
+
 def preprocess_labels(labels):
     labels['diagnosis'] = labels['diagnosis'].apply(lambda x: 1 if x > 0 else 0)
     return labels
@@ -33,6 +34,8 @@ def preprocess_labels(labels):
 # Preprocess train and validation labels
 train_labels = preprocess_labels(train_labels)
 validation_labels = preprocess_labels(validation_labels)
+
+
 
 # Create data generators for training, validation, and test data
 train_datagen = ImageDataGenerator(rescale=1./255)
@@ -59,17 +62,19 @@ model.add(Flatten(input_shape=(224, 224, 3)))
 
 # Hidden layer
 model.add(Dense(128, activation='relu'))
-model.add(Dropout(0.5))
+model.add(Dense(64, activation='sigmoid'))
+# model.add(Dropout(0.5))
+
 
 # Output layer
-model.add(Dense(1, activation='sigmoid'))
+model.add(Dense(1, activation='tanh'))
 
 model.compile(loss='binary_crossentropy',
               optimizer='adam',
               metrics=['accuracy'])
 
 # Training the model
-epochs = 10
+epochs = 3
 history = model.fit(
     train_generator,
     steps_per_epoch=len(train_generator),
